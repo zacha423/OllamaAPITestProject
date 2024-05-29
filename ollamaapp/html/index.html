@@ -4,46 +4,85 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   </head>
   <body>
-    <h1></h1>
-    
-      <input type="text" name="prompt"></input>
-      <input type="submit">
-    
-    <p>
-      Ollama Output:<br>
-      <span id="span"></span>
-    </p>
+    <h1>Ollama API Test</h1>
+    <div>
+      <textarea name="prompt" rows="5" cols="72"></textarea>
+    </div>
+    <div>
+      <button name="pull" style="background-color:red">Pull Model</button>
+      <input type="submit" value="Submit Prompt">
+    </div>
+    <h2>Results</h2>
+    <p><span id="span"></span></p>
+    <h2>Usage Instructions</h2>
+    <p><ol><li>Click *Pull Model*</li><li>Enter a prompt and click *Submit*</li>
+    <li>Wait for the response to be generated and displayed.</li></ol></p>
   </body>
   <script>
+    // Change the model here (gemma:2b, llama3, etc.)
+    const MODEL = "gemma:2b"; 
+
+    // Change the location of the Ollama server here.
+    const OLLAMA_SERVER = "localhost:11434" 
+
     $(() => {
-      $('input[type="submit"]').on('click', () => {
+      //***********************************************************************
+      // Link 'Pull' button to API request
+      //***********************************************************************
+      $('button[name="pull"]').on('click', () => {
+        const pullRequest = new XMLHttpRequest();
+        const pullEndpoint = "http://localhost:11434/api/pull";
+        const requestData = JSON.stringify({
+          name: MODEL, 
+          stream: false
+        });
 
-
-        promptdata = JSON.stringify({model:"gemma:2b", prompt: $('input[name="prompt"]')[0].value, stream:false});
+        pullRequest.open("POST", pullEndpoint, true);
+        pullRequest.setRequestHeader('Content-Type','application/json');
         
-        let request = new XMLHttpRequest();
-        const url = "http://localhost:11434/api/generate";
-        request.open("POST", url, true);
-        request.setRequestHeader('Content-Type', 'application/json');
-        request.onreadystatechange = () => {
-          console.log (request.readyState + " " + request.status);
-          if (request.readyState === 4 && request.status === 200) {
-            let json = JSON.parse(request.responseText);
-            console.log(request.responseText);
+        // Set *Pull* button green or log pull error
+        pullRequest.onreadystatechange = () => {
+          if (pullRequest.readyState === 4 && pullRequest.status === 200) {
+            json = JSON.parse(pullRequest.responseText);
+            if (json.status === "success") {
+              $('button[name="pull"]').css("background-color","green");
+            }
+            else {
+              console.log ("ERROR: Failed to pull model: " + MODEL);
+              console.log ("ERROR: Full details: " + pullRequest.responseText);
+            }
+          }
+        };
+
+        pullRequest.send(requestData);
+      });
+
+      //***********************************************************************
+      // Link the *Submit* button to the AJAX for response generation
+      //***********************************************************************
+      $('input[type="submit"]').on('click', () => {
+        const generateRequest = new XMLHttpRequest();
+        const generateEndpoint = "http://localhost:11434/api/generate";
+        const promptdata = JSON.stringify({
+          model: MODEL, 
+          prompt: $('textarea[name="prompt"]')[0].value, 
+          stream:false
+        });
+        
+        generateRequest.open("POST", generateEndpoint, true);
+        generateRequest.setRequestHeader('Content-Type', 'application/json');
+        
+        // Get generated response and store in <span>.
+        generateRequest.onreadystatechange = () => {
+          console.log (generateRequest.readyState + " " + generateRequest.status);
+          if (generateRequest.readyState === 4 && generateRequest.status === 200) {
+            let json = JSON.parse(generateRequest.responseText);
+            console.log(generateRequest.responseText);
             $('span').html(json.response);
           }
-        }
-        request.send(promptdata);
-        
-        // $.post ({
-        //   type: "POST",
-        //   url: "http://localhost:11434/api/generate", 
-        //   data: promptdata,
-        //   // data: "{'model':'gemma:2b','prompt':'" + $('input[name="prompt"]')[0].value + "'}",
-        //   success: (res) => {
-        //     $('span').html(res);
-        //   }
-        // });
+        };
+
+        generateRequest.send(promptdata);
       });
     });
   </script>
