@@ -1,0 +1,21 @@
+version: '3.9'
+services:
+  devcontainer:
+    image: "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm"
+    volumes:
+      - ../../:/workspaces:cached
+    command: sleep infinity
+    networks:
+      - ollama
+  ollama: #https://hub.docker.com/r/ollama/ollama
+    container_name: ollama
+    restart: unless-stopped
+    image: ollama/ollama
+    ports:
+      - 11434:11434
+    networks:
+      - ollama
+    volumes:
+    - ./ollama/ollama:/root/.ollama
+networks:
+  ollama:
