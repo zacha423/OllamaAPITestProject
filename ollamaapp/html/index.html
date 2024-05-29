@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  </head>
+  <body>
+    <h1></h1>
+    
+      <input type="text" name="prompt"></input>
+      <input type="submit">
+    
+    <p>
+      Ollama Output:<br>
+      <span id="span"></span>
+    </p>
+  </body>
+  <script>
+    $(() => {
+      $('input[type="submit"]').on('click', () => {
+
+
+        promptdata = JSON.stringify({model:"gemma:2b", prompt: $('input[name="prompt"]')[0].value, stream:false});
+        
+        let request = new XMLHttpRequest();
+        const url = "http://localhost:11434/api/generate";
+        request.open("POST", url, true);
+        request.setRequestHeader('Content-Type', 'application/json');
+        request.onreadystatechange = () => {
+          console.log (request.readyState + " " + request.status);
+          if (request.readyState === 4 && request.status === 200) {
+            let json = JSON.parse(request.responseText);
+            console.log(request.responseText);
+            $('span').html(json.response);
+          }
+        }
+        request.send(promptdata);
+        
+        // $.post ({
+        //   type: "POST",
+        //   url: "http://localhost:11434/api/generate", 
+        //   data: promptdata,
+        //   // data: "{'model':'gemma:2b','prompt':'" + $('input[name="prompt"]')[0].value + "'}",
+        //   success: (res) => {
+        //     $('span').html(res);
+        //   }
+        // });
+      });
+    });
+  </script>
+</html>

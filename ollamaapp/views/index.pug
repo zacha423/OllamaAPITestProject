@@ -1,9 +1,0 @@
-extends layout
-
-block content
-  h1= title
-  form(action="/generate" method="POST")
-    input(type="text" name="prompt")
-    input(type="submit")
-    input(type="hidden" value="gemma:2b" name="model")
-    input(type="hidden" value="false" name="stream")
